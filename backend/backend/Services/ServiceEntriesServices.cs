@@ -28,6 +28,12 @@ namespace backend.Services
             await serviceEntriesSchema.InsertOneAsync(service);
         }
 
+        public async Task<List<ServiceEntriesSchema>> GetAllSetvice()
+        {
+            var service = await serviceEntriesSchema.Find(all => true).ToListAsync();
+            return service;
+        }
+
         public async Task<ServiceEntriesSchema> GetSetvice(string serviceId)
         {
             var service = await serviceEntriesSchema.Find(sr => sr.Id == serviceId).FirstOrDefaultAsync();

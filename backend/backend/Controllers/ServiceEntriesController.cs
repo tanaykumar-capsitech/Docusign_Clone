@@ -26,6 +26,20 @@ namespace backend.Controllers
         }
 
 
+        [HttpGet("GetAllServices")]
+        public async Task<List<ServiceEntriesSchema>> GetAllServiceDetails()
+        {
+            var service = await serviceEntriesServices.GetAllSetvice();
+
+            foreach (var item in service)
+            { 
+                item.OriginalFileKey = cloudinaryServices.GetFileUrl(item.OriginalFileKey);
+            }
+
+            return service;
+        } 
+
+
         [HttpGet("GetService")]
         public async Task<ServiceEntriesSchema> GetServiceDetails(string serviceId)
         {
