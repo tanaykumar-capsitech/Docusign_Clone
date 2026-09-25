@@ -25,9 +25,11 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("DatabaseSettings"));
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 builder.Services.AddScoped<ServiceEntriesServices>();
 builder.Services.AddScoped<CloudinaryServices>();
+builder.Services.AddScoped<EmailService>();
 
 
 var app = builder.Build();

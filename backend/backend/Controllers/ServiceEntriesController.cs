@@ -11,16 +11,22 @@ namespace backend.Controllers
     {
         private readonly ServiceEntriesServices serviceEntriesServices;
         private readonly CloudinaryServices cloudinaryServices;
+        private readonly EmailService emailService;
 
-        public ServiceEntriesController(ServiceEntriesServices serviceEntriesServices, CloudinaryServices cloudinaryServices)
+        public ServiceEntriesController(ServiceEntriesServices serviceEntriesServices, CloudinaryServices cloudinaryServices, EmailService emailService)
         {
             this.serviceEntriesServices = serviceEntriesServices;
             this.cloudinaryServices = cloudinaryServices;
+            this.emailService = emailService;
         }
 
         [HttpPost("CreateService")]
         public async Task CreateService([FromForm]ServiceEntriesCreationDTO dto)
         {
+            if (string.IsNullOrEmpty(dto.ServiceName) || dto.Document == null)
+            {
+                return;
+            }
             string filekey = await cloudinaryServices.UploadFile(dto.Document);
             await serviceEntriesServices.CreateService(dto.ServiceName, filekey);
         }
@@ -52,9 +58,10 @@ namespace backend.Controllers
 
 
         [HttpPost("UpdateSignDetails")]
-        public async Task UpdateSignFieldDetails(string serviceId, List<SignatureField> signs)
+        public async Task UpdateSignFieldDetails(string serviceId, string toEmail, List<SignatureField> signs)
         {
             await serviceEntriesServices.UpdateSignFieldDetails(serviceId, signs);
+            await emailService.SendMail(toEmail, serviceId);
         }
 
 

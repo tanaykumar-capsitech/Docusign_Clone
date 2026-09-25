@@ -40,12 +40,13 @@ namespace backend.Services
             return service;
         }
 
-        public async Task UpdateSignFieldDetails(string serviceId, List<SignatureField> signFields)
+        public async Task<ServiceEntriesSchema> UpdateSignFieldDetails(string serviceId, List<SignatureField> signFields)
         {
             var filter = Builders<ServiceEntriesSchema>.Filter.Eq(sr => sr.Id, serviceId);
-            var update = Builders<ServiceEntriesSchema>.Update.Set(sr => sr.SignatureField, signFields);
+            var update = Builders<ServiceEntriesSchema>.Update.Set(sr => sr.SignatureField, signFields).Set(sr => sr.Status, DocumentStatus.Sent);
 
             await serviceEntriesSchema.UpdateOneAsync(filter, update);
+            return await serviceEntriesSchema.Find(filter).FirstOrDefaultAsync();
         }
 
         public async Task<ServiceEntriesSchema> UpdateSign(SignatureUpdateDTO dto)

@@ -15,6 +15,7 @@ const EnquiryList = () => {
     const [openAddForm, setOpenAddForm] = useState(false)
     const [enquiry, setEnquiry] = useState<Enquiries>()
     const [signFields, setSignFields] = useState<SignFieldDetails[]>([])
+    const [email, setEmail] = useState("")
 
     const navigate = useNavigate()
 
@@ -38,8 +39,9 @@ const EnquiryList = () => {
     }
 
     const UpdateSignatureFields = async () => {
-        console.log(signFields)
-        await axios.post(url + `ServiceEntries/UpdateSignDetails?serviceId=${enquiry?.id}`, signFields)
+        console.log(email)
+        await axios.post(url + `ServiceEntries/UpdateSignDetails?serviceId=${enquiry?.id}&&toEmail=${email}`, signFields)
+        GetEnquiries()
         setSignFields([])
         setOpenDetails(false)
     }
@@ -119,7 +121,6 @@ const EnquiryList = () => {
             onRender: (item: Enquiries) => {
                 return <span >
                     <Icon onClick={() => { setEnquiry(item); setOpenDetails(true) }} iconName="RedEye" className="mx-1 p-1 bg-gray-200 rounded-2xl cursor-pointer" styles={{ root: { fontWeight: 600 } }}></Icon>
-                    <Icon onClick={() => { navigate(`serviceDetails/${item.id}`) }} iconName="ChromeBackMirrored" className="mx-1 p-1 bg-gray-200 rounded-2xl cursor-pointer" styles={{ root: { fontWeight: 600 } }}></Icon>
                 </span>;
             },
             isPadded: true,
@@ -181,12 +182,25 @@ const EnquiryList = () => {
                 isOpen={openDetails}
                 onDismiss={() => setOpenDetails(false)}
             >
+
                 {enquiry &&
                     <div className="h-full">
-                        <div className="p-4 flex gap-5 fixed w-full bg-white z-10">
-                            <PrimaryButton text="Send" onClick={() => { UpdateSignatureFields() }} />
-                            <DefaultButton text="Cancel" onClick={() => { setOpenDetails(false) }} />
-                        </div>
+                        {enquiry.status != 2 && (
+                            <div className="p-4 flex gap-5 fixed w-full bg-white z-10">
+                                <div>
+                                    <label className="text-[18px]">To: </label>
+                                    <input
+                                        value={email}
+                                        onChange={(e) => { setEmail(e.target.value) }}
+                                        disabled={enquiry.status == 2}
+                                        type="text" className="mr-10 py-1 px-3 border border-gray-400 rounded-full outline-none"
+                                    />
+                                </div>
+                                <PrimaryButton disabled={enquiry.status == 2} text="Send" onClick={() => { UpdateSignatureFields() }} />
+                                <DefaultButton text="Cancel" onClick={() => { setOpenDetails(false) }} />
+                            </div>
+                        )}
+
                         <PdfViewer
                             signed={enquiry.status == 2}
                             url={enquiry.status == 2 ? enquiry.signedFileKey : enquiry.originalFileKey}
