@@ -2,11 +2,14 @@
 using backend.Settings;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Font;
+using iText.IO.Font;
+using iText.IO.Font.Constants;
+using iText.Kernel.Geom;
 using Microsoft.Extensions.Options;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
-using PdfSharp.Fonts;
-using PdfSharp.Pdf.IO;
+using System.IO;
 
 namespace backend.Services
 {
@@ -31,6 +34,7 @@ namespace backend.Services
             var result = await cloud.UploadAsync(uploadParams);
             return result.PublicId;
         }
+
 
         public async Task<string> UploadUpdatedFile(string fileName, byte[] pdfStream)
         {
@@ -62,39 +66,76 @@ namespace backend.Services
         public byte[] UpdatePdf(byte[] pdfByte, List<SignatureField> signatureFields, string signature)
         {
             using var inputSetream = new MemoryStream(pdfByte);
+            using var outputStream = new MemoryStream();
 
-            using PdfDocument document = PdfReader.Open(
-                    inputSetream,
-                    PdfDocumentOpenMode.Modify
+            var reader = new PdfReader(inputSetream);
+            var writer = new PdfWriter(outputStream);
+
+            using var document =new PdfDocument(
+                    reader,
+                    writer
                 );
+
+            var fontPath = System.IO.Path.Combine(
+                AppContext.BaseDirectory,
+                "Font",
+                "Caveat-Regular.ttf"
+            );
+
+            PdfFont font = PdfFontFactory.CreateFont(
+                fontPath,
+                PdfEncodings.IDENTITY_H,
+                PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+            );
 
             foreach (var item in signatureFields)
             {
-                PdfPage page = document.Pages[item.Page - 1];
+                PdfPage page = document.GetPage(item.Page);
 
-                using XGraphics gfx = XGraphics.FromPdfPage(page);
+                Rectangle pageSize = page.GetPageSize();
 
-                var rect = new XRect( 
-                    item.X, 
-                    item.Y, 
-                    item.Width, 
-                    item.Height
-                );
+                float pageWidth = pageSize.GetWidth();
+                float pageHeight = pageSize.GetHeight();
 
-                XFont font = new XFont("Caveat", 24);
+                double x = item.X;
+                double y = pageHeight - item.Y - item.Height;
 
-                gfx.DrawString(
-                    signature,
-                    font,
-                    XBrushes.Black,
-                    rect,
-                    XStringFormats.Center
-                );
+                var canvas = new PdfCanvas(page);
+
+                canvas.BeginText();
+
+                canvas.SetFontAndSize(font, 24);
+
+                canvas.MoveText(x, y);
+
+                canvas.ShowText(signature);
+
+                canvas.EndText();
             }
 
+
+            document.Close();
+
+            return outputStream.ToArray();
+        }
+
+        public byte[] RemoveEmbeddedFiles(byte[] pdfBytes)
+        {
+            using var inputStream = new MemoryStream(pdfBytes);
             using var outputStream = new MemoryStream();
 
-            document.Save(outputStream, false);
+            using (var reader = new PdfReader(inputStream))
+            using (var writer = new PdfWriter(outputStream))
+            using (var pdfDocument = new PdfDocument(reader, writer))
+            {
+                var catalog = pdfDocument.GetCatalog().GetPdfObject();
+
+                // Remove embedded files
+                catalog.Remove(PdfName.Names);
+
+                // Remove associated files
+                catalog.Remove(PdfName.AF);
+            }
 
             return outputStream.ToArray();
         }

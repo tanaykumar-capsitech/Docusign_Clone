@@ -1,11 +1,10 @@
-import { DefaultButton, DetailsList, Icon, Label, Panel, PanelType, PrimaryButton, type IColumn } from "@fluentui/react"
+import { DefaultButton, DetailsList, Icon, Label, Panel, PanelType, PrimaryButton, Spinner, type IColumn } from "@fluentui/react"
 import axios from "axios"
 import { useFormik } from "formik";
 import { useEffect, useState } from "react"
 import * as Yup from 'yup'
 import PdfViewer from "../Components/PdfViewer";
 import type { Enquiries, ServiceCreationRequest, SignFieldDetails } from "../Utils/AllInterfaces";
-import { useNavigate } from "react-router-dom";
 
 const url = import.meta.env.VITE_BASE_URL
 
@@ -16,8 +15,8 @@ const EnquiryList = () => {
     const [enquiry, setEnquiry] = useState<Enquiries>()
     const [signFields, setSignFields] = useState<SignFieldDetails[]>([])
     const [email, setEmail] = useState("")
-
-    const navigate = useNavigate()
+    const [register, setRegister] = useState(false)
+    const [update, setUpdate] = useState(false)
 
     const GetEnquiries = async () => {
         const result = await axios.get(url + "ServiceEntries/GetAllServices")
@@ -25,8 +24,8 @@ const EnquiryList = () => {
     }
 
     const AddNewEnquiries = async (values: ServiceCreationRequest) => {
+        setRegister(true)
         const formData = new FormData()
-
         formData.append("serviceName", values.serviceName)
         if (values.file)
             formData.append("document", values.file)
@@ -34,15 +33,18 @@ const EnquiryList = () => {
         const result = await axios.post(url + "ServiceEntries/CreateService", formData)
         console.log(result);
         setOpenAddForm(false)
+        setRegister(false)
         GetEnquiries()
         formik.resetForm()
     }
 
     const UpdateSignatureFields = async () => {
-        console.log(email)
+        setUpdate(true)
         await axios.post(url + `ServiceEntries/UpdateSignDetails?serviceId=${enquiry?.id}&&toEmail=${email}`, signFields)
         GetEnquiries()
         setSignFields([])
+        setUpdate(false)
+        setEmail("")
         setOpenDetails(false)
     }
 
@@ -125,7 +127,6 @@ const EnquiryList = () => {
             },
             isPadded: true,
         },
-
     ]
 
     const initial: ServiceCreationRequest = {
@@ -173,7 +174,7 @@ const EnquiryList = () => {
                         </input>
                         <div className="text-red-600">{formik.errors.file ?? ""}</div>
                     </div>
-                    <button type="submit" className="px-2 border border-gray-300 rounded">Register</button>
+                    <button type="submit" className="px-2 border border-gray-300 rounded">{register ? <Spinner></Spinner> : 'Register'}</button>
                 </form>
             </Panel>
 
@@ -184,9 +185,9 @@ const EnquiryList = () => {
             >
 
                 {enquiry &&
-                    <div className="h-full">
+                    <div className="h-full flex flex-col">
                         {enquiry.status != 2 && (
-                            <div className="p-4 flex gap-5 fixed w-full bg-white z-10">
+                            <div className="sticky p-4 flex gap-5 w-full bg-white z-10">
                                 <div>
                                     <label className="text-[18px]">To: </label>
                                     <input
@@ -196,7 +197,7 @@ const EnquiryList = () => {
                                         type="text" className="mr-10 py-1 px-3 border border-gray-400 rounded-full outline-none"
                                     />
                                 </div>
-                                <PrimaryButton disabled={enquiry.status == 2} text="Send" onClick={() => { UpdateSignatureFields() }} />
+                                <PrimaryButton disabled={enquiry.status == 2} text="Send" onClick={() => { UpdateSignatureFields() }} >{update && <Spinner></Spinner>}</PrimaryButton>
                                 <DefaultButton text="Cancel" onClick={() => { setOpenDetails(false) }} />
                             </div>
                         )}
