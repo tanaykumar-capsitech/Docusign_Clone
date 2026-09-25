@@ -11,9 +11,10 @@ namespace backend.Models
         public string OriginalFileKey { get; set; }
         public string? SignedFileKey { get; set; }
         public string? RecipientEmail { get; set; }
+        public string? RecipientSignature { get; set; }
         public DocumentStatus Status { get; set; } = DocumentStatus.Draft;
         public string CreatedBy { get; set; }
-        public SignatureField? SignatureField { get; set; }
+        public List<SignatureField>? SignatureField { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

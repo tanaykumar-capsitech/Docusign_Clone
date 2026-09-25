@@ -39,5 +39,30 @@ namespace backend.Services
             var service = await serviceEntriesSchema.Find(sr => sr.Id == serviceId).FirstOrDefaultAsync();
             return service;
         }
+
+        public async Task UpdateSignFieldDetails(string serviceId, List<SignatureField> signFields)
+        {
+            var filter = Builders<ServiceEntriesSchema>.Filter.Eq(sr => sr.Id, serviceId);
+            var update = Builders<ServiceEntriesSchema>.Update.Set(sr => sr.SignatureField, signFields);
+
+            await serviceEntriesSchema.UpdateOneAsync(filter, update);
+        }
+
+        public async Task<ServiceEntriesSchema> UpdateSign(SignatureUpdateDTO dto)
+        {
+            var filter = Builders<ServiceEntriesSchema>.Filter.Eq(sr => sr.Id, dto.ServiceId);
+            var update = Builders<ServiceEntriesSchema>.Update.Set(sr => sr.RecipientSignature, dto.Signature).Set(sr => sr.Status, DocumentStatus.Signed);
+
+            await serviceEntriesSchema.UpdateOneAsync(filter, update);
+            return await serviceEntriesSchema.Find(filter).FirstOrDefaultAsync();
+        }
+
+        public async Task UpdateSignedPdfPath(string id,  string updatedPublicKey)
+        {
+            var filter = Builders<ServiceEntriesSchema>.Filter.Eq(sr => sr.Id, id);
+            var update = Builders<ServiceEntriesSchema>.Update.Set(sr => sr.SignedFileKey, updatedPublicKey);
+
+            await serviceEntriesSchema.UpdateOneAsync(filter, update);
+        }
     }
 }

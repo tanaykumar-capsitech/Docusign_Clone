@@ -9,7 +9,14 @@
   <ItemGroup>
     <PackageReference Include="CloudinaryDotNet" Version="1.29.3" />
     <PackageReference Include="MongoDB.Driver" Version="3.12.0" />
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Font\Caveat-Regular.ttf">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

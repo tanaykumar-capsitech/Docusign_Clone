@@ -1,8 +1,11 @@
+using backend;
 using backend.Services;
 using backend.Settings;
+using PdfSharp.Fonts;
 
 var builder = WebApplication.CreateBuilder(args);
 
+GlobalFontSettings.FontResolver = new CustomFontResolver();
 // Add services to the container.
 
 builder.Services.AddControllers();

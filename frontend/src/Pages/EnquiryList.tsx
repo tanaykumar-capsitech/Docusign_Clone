@@ -1,43 +1,22 @@
-import { DefaultButton, DetailsList, Icon, Label, Panel, PanelType, type IColumn } from "@fluentui/react"
+import { DefaultButton, DetailsList, Icon, Label, Panel, PanelType, PrimaryButton, type IColumn } from "@fluentui/react"
 import axios from "axios"
 import { useFormik } from "formik";
 import { useEffect, useState } from "react"
 import * as Yup from 'yup'
 import PdfViewer from "../Components/PdfViewer";
+import type { Enquiries, ServiceCreationRequest, SignFieldDetails } from "../Utils/AllInterfaces";
+import { useNavigate } from "react-router-dom";
 
 const url = import.meta.env.VITE_BASE_URL
-
-interface SignatureField {
-    page: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-interface Enquiries {
-    id: string;
-    serviceName: string;
-    originalFileKey: string;
-    signedFileKey: string | null;
-    recipientEmail: string | null;
-    status: number;
-    createdBy: string;
-    signatureField: SignatureField | null;
-    createdAt: string;
-}
-
-interface ServiceCreationRequest {
-    serviceName: string;
-    file: File | null
-}
 
 const EnquiryList = () => {
     const [enquiries, setEnquiries] = useState<Enquiries[]>([])
     const [openDetails, setOpenDetails] = useState(false)
     const [openAddForm, setOpenAddForm] = useState(false)
     const [enquiry, setEnquiry] = useState<Enquiries>()
+    const [signFields, setSignFields] = useState<SignFieldDetails[]>([])
 
+    const navigate = useNavigate()
 
     const GetEnquiries = async () => {
         const result = await axios.get(url + "ServiceEntries/GetAllServices")
@@ -55,6 +34,14 @@ const EnquiryList = () => {
         console.log(result);
         setOpenAddForm(false)
         GetEnquiries()
+        formik.resetForm()
+    }
+
+    const UpdateSignatureFields = async () => {
+        console.log(signFields)
+        await axios.post(url + `ServiceEntries/UpdateSignDetails?serviceId=${enquiry?.id}`, signFields)
+        setSignFields([])
+        setOpenDetails(false)
     }
 
     useEffect(() => {
@@ -130,8 +117,9 @@ const EnquiryList = () => {
             maxWidth: 150,
             isResizable: true,
             onRender: (item: Enquiries) => {
-                return <span onClick={() => { setEnquiry(item); setOpenDetails(true) }}>
-                    <Icon iconName="RedEye" className="p-1 bg-gray-200 rounded-2xl cursor-pointer" styles={{ root: { fontWeight: 600 } }}></Icon>
+                return <span >
+                    <Icon onClick={() => { setEnquiry(item); setOpenDetails(true) }} iconName="RedEye" className="mx-1 p-1 bg-gray-200 rounded-2xl cursor-pointer" styles={{ root: { fontWeight: 600 } }}></Icon>
+                    <Icon onClick={() => { navigate(`serviceDetails/${item.id}`) }} iconName="ChromeBackMirrored" className="mx-1 p-1 bg-gray-200 rounded-2xl cursor-pointer" styles={{ root: { fontWeight: 600 } }}></Icon>
                 </span>;
             },
             isPadded: true,
@@ -188,9 +176,23 @@ const EnquiryList = () => {
                 </form>
             </Panel>
 
-            <Panel type={PanelType.medium} isOpen={openDetails} onClick={() => setOpenDetails(false)}>
+            <Panel
+                type={PanelType.medium}
+                isOpen={openDetails}
+                onDismiss={() => setOpenDetails(false)}
+            >
                 {enquiry &&
-                    <PdfViewer url={enquiry.originalFileKey} />
+                    <div className="h-full">
+                        <div className="p-4 flex gap-5 fixed w-full bg-white z-10">
+                            <PrimaryButton text="Send" onClick={() => { UpdateSignatureFields() }} />
+                            <DefaultButton text="Cancel" onClick={() => { setOpenDetails(false) }} />
+                        </div>
+                        <PdfViewer
+                            signed={enquiry.status == 2}
+                            url={enquiry.status == 2 ? enquiry.signedFileKey : enquiry.originalFileKey}
+                            setSignatureFields={setSignFields}
+                        />
+                    </div>
                 }
             </Panel>
 
