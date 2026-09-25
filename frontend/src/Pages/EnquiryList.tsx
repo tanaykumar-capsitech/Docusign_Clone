@@ -194,7 +194,7 @@ const EnquiryList = () => {
                                         value={email}
                                         onChange={(e) => { setEmail(e.target.value) }}
                                         disabled={enquiry.status == 2}
-                                        type="text" className="mr-10 py-1 px-3 border border-gray-400 rounded-full outline-none"
+                                        type="email" className="mr-10 py-1 px-3 border border-gray-400 rounded-full outline-none"
                                     />
                                 </div>
                                 <PrimaryButton disabled={enquiry.status == 2} text="Send" onClick={() => { UpdateSignatureFields() }} >{update && <Spinner></Spinner>}</PrimaryButton>
