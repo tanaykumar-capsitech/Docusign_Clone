@@ -71,10 +71,7 @@ namespace backend.Services
             var reader = new PdfReader(inputSetream);
             var writer = new PdfWriter(outputStream);
 
-            using var document =new PdfDocument(
-                    reader,
-                    writer
-                );
+            using var document = new PdfDocument(reader,writer);
 
             var fontPath = System.IO.Path.Combine(
                 AppContext.BaseDirectory,
@@ -115,27 +112,6 @@ namespace backend.Services
 
 
             document.Close();
-
-            return outputStream.ToArray();
-        }
-
-        public byte[] RemoveEmbeddedFiles(byte[] pdfBytes)
-        {
-            using var inputStream = new MemoryStream(pdfBytes);
-            using var outputStream = new MemoryStream();
-
-            using (var reader = new PdfReader(inputStream))
-            using (var writer = new PdfWriter(outputStream))
-            using (var pdfDocument = new PdfDocument(reader, writer))
-            {
-                var catalog = pdfDocument.GetCatalog().GetPdfObject();
-
-                // Remove embedded files
-                catalog.Remove(PdfName.Names);
-
-                // Remove associated files
-                catalog.Remove(PdfName.AF);
-            }
 
             return outputStream.ToArray();
         }
